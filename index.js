@@ -38,7 +38,7 @@ class GStore extends BaseStore {
 
       return new Promise((resolve, reject) => {
         this.getUniqueFileName(image, targetDir).then(filename => {
-          const tmpFile = path.join(os.tmpdir(), filename);
+          const tmpFile = path.join(os.tmpdir(), path.basename(filename));
           sharp(image.path).toFile(tmpFile).then(() => {
             targetFilename = filename;
             var opts = {
