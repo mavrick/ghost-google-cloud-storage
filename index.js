@@ -30,33 +30,33 @@ class GStore extends BaseStore {
     }
 
     save(image) {
-        if (!options) return Promise.reject('google cloud storage is not configured');
+      if (!options) return Promise.reject('google cloud storage is not configured');
 
-        var targetDir = this.getTargetDir(),
-        googleStoragePath = `http${this.insecure?'':'s'}://${this.assetDomain}/`,
-        targetFilename;
+      var targetDir = this.getTargetDir(),
+      googleStoragePath = `http${this.insecure?'':'s'}://${this.assetDomain}/`,
+      targetFilename;
 
-        return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
+        this.getUniqueFileName(image, targetDir).then(filename => {
           const tmpFile = path.join(os.tmpdir(), filename);
           sharp(image.path).toFile(tmpFile).then(() => {
-            this.getUniqueFileName(image, targetDir).then(filename => {
-              targetFilename = filename;
-              var opts = {
-                  destination: targetDir + filename,
-                  metadata: {
-                      cacheControl: `public, max-age=${this.maxAge}`
-                  },
-                  gzip: true,
-                  public: true
-              };
-              return this.bucket.upload(tmpFile, opts);
-            }).then(function (data) {
-                return resolve(googleStoragePath + targetDir + targetFilename);
-            }).catch(function (e) {
-                return reject(e);
-            });
+            targetFilename = filename;
+            var opts = {
+                destination: targetDir + filename,
+                metadata: {
+                    cacheControl: `public, max-age=${this.maxAge}`
+                },
+                gzip: true,
+                public: true
+            };
+            return this.bucket.upload(tmpFile, opts);
+          }).then(function (data) {
+              return resolve(googleStoragePath + targetDir + targetFilename);
+          }).catch(function (e) {
+              return reject(e);
           });
         });
+      });
     }
 
     // middleware for serving the files
