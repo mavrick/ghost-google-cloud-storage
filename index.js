@@ -1,5 +1,7 @@
 'use strict';
 
+const sharp = require('sharp');
+
 var storage     = require('@google-cloud/storage'),
     BaseStore   = require('ghost-storage-base'),
     Promise     = require('bluebird'),
@@ -32,21 +34,24 @@ class GStore extends BaseStore {
         targetFilename;
 
         return new Promise((resolve, reject) => {
+          sharp(image.path).toFile(image.path).then(() => {
             this.getUniqueFileName(image, targetDir).then(filename => {
-                targetFilename = filename;
-                var opts = {
-                    destination: targetDir + filename,
-                    metadata: {
-                        cacheControl: `public, max-age=${this.maxAge}`
-                    },
-                    public: true
-                };
-                return this.bucket.upload(image.path, opts);
+              targetFilename = filename;
+              var opts = {
+                  destination: targetDir + filename,
+                  metadata: {
+                      cacheControl: `public, max-age=${this.maxAge}`
+                  },
+                  gzip: true,
+                  public: true
+              };
+              return this.bucket.upload(image.path, opts);
             }).then(function (data) {
                 return resolve(googleStoragePath + targetDir + targetFilename);
             }).catch(function (e) {
                 return reject(e);
             });
+          });
         });
     }
 
