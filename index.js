@@ -29,6 +29,29 @@ class GStore extends BaseStore {
         this.maxAge = options.maxAge || 2678400;
     }
 
+    thumbnail(image, targetDir, filename, size) {
+      const info = path.parse(filename);
+      const thumbnail = path.join(info.dir, `${info.name}-${size}.${info.ext}`);
+      const tmpFile = path.join(os.tmpdir(), path.basename(thumbnail));
+
+      sharp(image.path)
+      .resize(size, size)
+      .max()
+      .withoutEnlargement()
+      .toFile(tmpFile).then(() => {
+        const opts = {
+          destination: targetDir + thumbnail,
+          metadata: {
+              cacheControl: `public, max-age=${this.maxAge}`
+          },
+          gzip: true,
+          public: true
+        };
+  
+        this.bucket.upload(tmpFile, opts);
+      });
+    }
+
     save(image) {
       if (!options) return Promise.reject('google cloud storage is not configured');
 
@@ -39,13 +62,18 @@ class GStore extends BaseStore {
       return new Promise((resolve, reject) => {
         this.getUniqueFileName(image, targetDir).then(filename => {
           const tmpFile = path.join(os.tmpdir(), path.basename(filename));
+          // generate a thumbnail for the front-end
+          this.thumbnail(image, targetDir, filename, 250);
+          // generate image for use inside the article
+          this.thumbnail(image, targetDir, filename, 600);
+          // generate the feature image
           sharp(image.path)
           .resize(1100, 620)
           .max()
           .withoutEnlargement()
           .toFile(tmpFile).then(() => {
             targetFilename = filename;
-            var opts = {
+            const opts = {
                 destination: targetDir + filename,
                 metadata: {
                     cacheControl: `public, max-age=${this.maxAge}`
