@@ -31,7 +31,7 @@ class GStore extends BaseStore {
 
     thumbnail(image, targetDir, filename, size) {
       const info = path.parse(filename);
-      const thumbnail = path.join(info.dir, `${info.name}-${size}.${info.ext}`);
+      const thumbnail = path.join(info.dir, `${info.name}-${size}${info.ext}`);
       const tmpFile = path.join(os.tmpdir(), path.basename(thumbnail));
 
       sharp(image.path)
